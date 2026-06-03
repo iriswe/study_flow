@@ -936,7 +936,7 @@ class _GoalTaskCard extends ConsumerWidget {
       color: Colors.transparent,
       borderRadius: BorderRadius.circular(AppTheme.radiusMd),
       child: InkWell(
-        onTap: () {},
+        onTap: () => _showTaskDetailDialog(context),
         borderRadius: BorderRadius.circular(AppTheme.radiusMd),
         child: Container(
           padding: const EdgeInsets.all(12),
@@ -1065,6 +1065,97 @@ class _GoalTaskCard extends ConsumerWidget {
           ),
         ),
       ),
+      ),
+    );
+  }
+
+  void _showTaskDetailDialog(BuildContext context) {
+    final isCompleted = task.isDone;
+    showDialog(
+      context: context,
+      builder: (ctx) => Dialog(
+        backgroundColor: AppTheme.surface,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppTheme.radiusLg)),
+        child: SizedBox(
+          width: 420,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+                decoration: BoxDecoration(
+                  border: Border(bottom: BorderSide(color: AppTheme.border)),
+                  borderRadius: const BorderRadius.vertical(top: Radius.circular(AppTheme.radiusLg)),
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const Text('任务详情', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
+                    IconButton(
+                      icon: Icon(Icons.close, color: AppTheme.textMuted),
+                      onPressed: () => Navigator.pop(ctx),
+                      padding: EdgeInsets.zero,
+                      constraints: const BoxConstraints(),
+                    ),
+                  ],
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.all(20),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(task.title, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600)),
+                    const SizedBox(height: 16),
+                    _DetailRow('类型', task.taskType == TaskType.HABIT ? '习惯' : '进度'),
+                    _DetailRow('状态', isCompleted ? '已完成' : (task.status == TaskStatus.IN_PROGRESS ? '进行中' : '待办')),
+                    _DetailRow('优先级', AppTheme.getPriorityLabel(task.priority)),
+                    if (task.estimateMinutes != null) _DetailRow('预计时长', '${task.estimateMinutes}分钟'),
+                    if (task.note != null && task.note!.isNotEmpty) ...[
+                      const SizedBox(height: 12),
+                      Text('任务描述', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w500, color: AppTheme.textSecondary)),
+                      const SizedBox(height: 6),
+                      Text(task.note!, style: TextStyle(fontSize: 14, color: AppTheme.text)),
+                    ],
+                  ],
+                ),
+              ),
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  border: Border(top: BorderSide(color: AppTheme.border)),
+                  borderRadius: const BorderRadius.vertical(bottom: Radius.circular(AppTheme.radiusLg)),
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: [
+                    TextButton(
+                      onPressed: () {
+                        Navigator.pop(ctx);
+                        onToggle(!isCompleted);
+                      },
+                      child: Text(isCompleted ? '取消完成' : '标记完成'),
+                    ),
+                    const SizedBox(width: 8),
+                    ElevatedButton(
+                      onPressed: () {
+                        Navigator.pop(ctx);
+                        onEdit();
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppTheme.primary,
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppTheme.radiusMd)),
+                      ),
+                      child: const Text('编辑'),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }
@@ -1282,6 +1373,29 @@ class _StatCard extends StatelessWidget {
           Text(value, style: TextStyle(fontSize: 24, fontWeight: FontWeight.w700, color: color)),
           const SizedBox(height: 2),
           Text(label, style: TextStyle(fontSize: 12, color: AppTheme.textSecondary)),
+        ],
+      ),
+    );
+  }
+}
+
+class _DetailRow extends StatelessWidget {
+  final String label;
+  final String value;
+
+  const _DetailRow(this.label, this.value);
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: Row(
+        children: [
+          SizedBox(
+            width: 80,
+            child: Text(label, style: TextStyle(fontSize: 13, color: AppTheme.textMuted)),
+          ),
+          Expanded(child: Text(value, style: TextStyle(fontSize: 13, color: AppTheme.text))),
         ],
       ),
     );
