@@ -745,6 +745,21 @@ class _TasksTabContentState extends ConsumerState<_TasksTabContent> {
     ref.invalidate(goalDetailProvider(widget.goalId));
   }
 
+  Future<void> _toggleSubTask(Task task, SubTask subTask) async {
+    final updated = await ref.read(tasksProvider.notifier).toggleSubTask(task.id, subTask.id);
+    if (mounted && updated != null) {
+      if (task.taskType == TaskType.HABIT) {
+        if (updated.checkedInToday) {
+          ToastWidget.show(context, '打卡成功！连续 ${updated.currentStreak} 天', type: 'success');
+        } else {
+          ToastWidget.show(context, '已取消打卡', type: 'info');
+        }
+      }
+    }
+    ref.invalidate(goalTasksProvider(widget.goalId));
+    ref.invalidate(goalDetailProvider(widget.goalId));
+  }
+
   @override
   Widget build(BuildContext context) {
     final tasksAsync = ref.watch(goalTasksProvider(widget.goalId));
@@ -808,6 +823,7 @@ class _TasksTabContentState extends ConsumerState<_TasksTabContent> {
                         onToggle: (completed) => _toggleTask(task, completed),
                         onEdit: () => _showEditDialog(task),
                         onDelete: () => _confirmDeleteTask(task),
+                        onToggleSubTask: (subTask, completed) => _toggleSubTask(task, subTask),
                       );
                     },
                   ),
@@ -894,21 +910,23 @@ class _NotesTabContent extends ConsumerWidget {
   }
 }
 
-class _GoalTaskCard extends StatelessWidget {
+class _GoalTaskCard extends ConsumerWidget {
   final Task task;
   final Function(bool) onToggle;
   final VoidCallback onEdit;
   final VoidCallback onDelete;
+  final Function(SubTask, bool)? onToggleSubTask;
 
   const _GoalTaskCard({
     required this.task,
     required this.onToggle,
     required this.onEdit,
     required this.onDelete,
+    this.onToggleSubTask,
   });
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final isCompleted = task.isDone;
     final notDueToday = task.taskType == TaskType.HABIT && !task.isDueToday;
 
@@ -1022,6 +1040,13 @@ class _GoalTaskCard extends StatelessWidget {
               Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
+                  if (task.taskType == TaskType.PROGRESSION && task.subTasks.isNotEmpty)
+                    IconButton(
+                      icon: Icon(Icons.playlist_add_check, size: 16, color: AppTheme.success),
+                      onPressed: () => _showSubTaskListDialog(context, ref),
+                      padding: EdgeInsets.zero,
+                      constraints: const BoxConstraints(minWidth: 28, minHeight: 28),
+                    ),
                   IconButton(
                     icon: Icon(Icons.edit_outlined, size: 16, color: AppTheme.textMuted),
                     onPressed: onEdit,
@@ -1079,6 +1104,75 @@ class _GoalTaskCard extends StatelessWidget {
         const SizedBox(width: 8),
         Text('累计 ${task.totalCompleted} 次', style: TextStyle(fontSize: 11, color: AppTheme.textMuted)),
       ],
+    );
+  }
+
+  void _showSubTaskListDialog(BuildContext context, WidgetRef ref) {
+    showDialog(
+      context: context,
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setDialogState) => Dialog(
+          backgroundColor: AppTheme.surface,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppTheme.radiusLg)),
+          child: SizedBox(
+            width: 400,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+                  decoration: BoxDecoration(border: Border(bottom: BorderSide(color: AppTheme.border)), borderRadius: BorderRadius.vertical(top: Radius.circular(AppTheme.radiusLg))),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text('子任务 (${task.subTasks.where((s) => s.completed).length}/${task.subTasks.length})', style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
+                      IconButton(icon: Icon(Icons.close, color: AppTheme.textMuted), onPressed: () => Navigator.pop(ctx), padding: EdgeInsets.zero, constraints: const BoxConstraints()),
+                    ],
+                  ),
+                ),
+                Flexible(
+                  child: Consumer(
+                    builder: (context, ref, _) {
+                      final currentTask = ref.watch(tasksProvider).tasks.firstWhere((t) => t.id == task.id, orElse: () => task);
+                      return ListView.builder(
+                        shrinkWrap: true,
+                        padding: const EdgeInsets.all(12),
+                        itemCount: currentTask.subTasks.length,
+                        itemBuilder: (ctx, index) {
+                          final subTask = currentTask.subTasks[index];
+                          return Padding(
+                            padding: const EdgeInsets.only(bottom: 8),
+                            child: Row(
+                              children: [
+                                GestureDetector(
+                                  onTap: () async {
+                                    if (onToggleSubTask != null) {
+                                      await onToggleSubTask!(subTask, !subTask.completed);
+                                      setDialogState(() {});
+                                    }
+                                  },
+                                  child: Container(
+                                    width: 18,
+                                    height: 18,
+                                    decoration: BoxDecoration(shape: BoxShape.circle, color: subTask.completed ? AppTheme.success : Colors.transparent, border: Border.all(color: subTask.completed ? AppTheme.success : AppTheme.border, width: 2)),
+                                    child: subTask.completed ? const Icon(Icons.check, size: 10, color: Colors.white) : null,
+                                  ),
+                                ),
+                                const SizedBox(width: 10),
+                                Expanded(child: Text(subTask.title, style: TextStyle(fontSize: 13, decoration: subTask.completed ? TextDecoration.lineThrough : null, color: subTask.completed ? AppTheme.textMuted : AppTheme.text))),
+                              ],
+                            ),
+                          );
+                        },
+                      );
+                    },
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
     );
   }
 }
