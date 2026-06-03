@@ -1,0 +1,60 @@
+# === Java / Spring Boot (server) ===
+server/build/
+server/.gradle/
+server/out/
+*.class
+*.jar
+*.war
+*.log
+
+# === Flutter (client) ===
+client/.dart_tool/
+client/.packages
+client/build/
+client/.flutter-plugins
+client/.flutter-plugins-dependencies
+client/pubspec.lock
+client/.metadata
+client/android/
+client/ios/
+client/linux/
+client/windows/
+client/web/
+client/macos/
+client/test/
+client/flutter_*.log
+client/studyflow_app.iml
+client/README.md
+
+# === Node (root level) ===
+node_modules/
+package-lock.json
+
+# === IDE ===
+.idea/
+.vscode/
+*.iml
+*.ipr
+*.iws
+
+# === OS ===
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+
+# === Env / secrets ===
+.env
+.env.*
+*.pem
+*.key
+
+# === Claude / MCP ===
+.claude/
+.mcp.json
+.firecrawl/
+memory_status.md
+test-prototype.js
+
+# === Docker ===
+docker-compose.override.yml

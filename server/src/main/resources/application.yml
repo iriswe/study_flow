@@ -1,0 +1,43 @@
+spring:
+  application:
+    name: studyflow-server
+
+  datasource:
+    url: jdbc:mysql://localhost:3306/studyflow?useSSL=false&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true
+    username: studyflow
+    password: studyflow123
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    hikari:
+      maximum-pool-size: 10
+      minimum-idle: 5
+      connection-timeout: 30000
+      idle-timeout: 600000
+      max-lifetime: 1800000
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+        dialect: org.hibernate.dialect.MySQLDialect
+    open-in-view: false
+
+server:
+  port: 8080
+  servlet:
+    context-path: /api
+
+# JWT 配置
+jwt:
+  secret: StudyFlowSecretKey2024ForJWTTokenGenerationMustBe256BitsLong
+  expiration: 86400000  # 24 小时（毫秒）
+
+# 日志配置
+logging:
+  level:
+    com.studyflow: DEBUG
+    org.springframework.security: DEBUG
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
