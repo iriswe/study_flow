@@ -1,22 +1,17 @@
+version: '3.8'
+
 services:
   mysql:
     image: mysql:8.0
-    container_name: studyflow_mysql
+    container_name: studyflow-mysql
     restart: unless-stopped
+    ports:
+      - "3307:3306"
     environment:
-      MYSQL_ROOT_PASSWORD: root123456
+      MYSQL_ROOT_PASSWORD: root123
       MYSQL_DATABASE: studyflow
       MYSQL_USER: studyflow
       MYSQL_PASSWORD: studyflow123
-    ports:
-      - "3306:3306"
     volumes:
-      - mysql_data:/var/lib/mysql
-    healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-
-volumes:
-  mysql_data:
+      - ./docker/mysql-data:/var/lib/mysql
+    command: --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
