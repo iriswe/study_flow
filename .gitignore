@@ -58,4 +58,5 @@ test-prototype.js
 
 # === Docker ===
 docker-compose.override.yml
-docker/mysql-data/
+server/docker-compose.yml
+server/docker/
